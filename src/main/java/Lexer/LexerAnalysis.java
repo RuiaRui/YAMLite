@@ -9,5 +9,5 @@ public class LexerAnalysis {
     private ArrayList<Token> TokenList;
     private String s = "";
     private int index = 0;
-    private int TAB = 2; // 缩减为2个空格
+    private int indent = 2; // 缩进为2个空格
 }
