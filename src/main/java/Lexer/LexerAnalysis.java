@@ -24,9 +24,13 @@ public class LexerAnalysis {
         while (Source!=null){
             checkLine(Source);
             Source=readLine(bufferedReader);
-
         }
+        if(!valid)
+            System.exit(1);
+
         return TokenList;
+
+
     }
 
     private BufferedReader readFile(String path){
@@ -71,7 +75,8 @@ public class LexerAnalysis {
         }
         //indent check
         if (currentIndent % indent != 0) {
-            LexerError Indenterror=new LexerError(+lineNo+" 行: 缩进错误");
+            LexerError Indenterror=new LexerError("Line"+lineNo+" : The indentation error");
+            valid=false;
         }
         level = currentIndent / indent;
 
@@ -81,7 +86,7 @@ public class LexerAnalysis {
             String content= currentLine.substring(posTemp);
             currentLine=currentLine.substring(0,posTemp);
             Token comment = new Token(TokenType.COMMENT, content, level,  lineNo,posTemp+1,false);
-            TokenList.add(comment);
+            //TokenList.add(comment);
         }
 
         //key:value
@@ -91,13 +96,15 @@ public class LexerAnalysis {
             String value = temp[1];
             int keypos=getPosition(key,line);
             if(!isIdentifierFormat(key)){
-                LexerError keyerror=new LexerError(+lineNo+" 行: "+keypos+"键格式错误");
+                LexerError keyerror=new LexerError("Line"+lineNo+", Position "+keypos+" : key format error");
+                valid=false;
             }
             if(!value.startsWith(" ")){
                 if(value.startsWith("\n")){
                     TokenList.add(new Token(TokenType.KEYWORD,key,level,lineNo,keypos,true));
                 }else{
-                    LexerError spaceerror=new LexerError(+lineNo+" 行: "+keypos+2+"冒号后缺少空格");
+                    LexerError spaceerror=new LexerError("Line "+lineNo+", Position "+keypos+" :  lost space after the colon");
+                    valid=false;
                 }
             }else{
                 value=value.replace(" ","");
@@ -118,7 +125,8 @@ public class LexerAnalysis {
                 if (currentLine.equals("\n")) {
                     TokenList.add(new Token(TokenType.ARRAY, "-", level, lineNo, pos, true));
                 } else {
-                    LexerError spaceerror2 = new LexerError(+lineNo + " 行: " + pos + 2 + "- 后缺少空格");
+                    LexerError spaceerror2 = new LexerError("Line "+lineNo+", Position "+pos+" :  lost space after the \"-\"");
+                    valid=false;
                 }
             }else {
                 currentLine = currentLine.trim();
@@ -132,7 +140,8 @@ public class LexerAnalysis {
         }else if(currentLine.equals("\n")| currentLine.equals("")){
             return;
         }else {
-            LexerError lineErr=new LexerError(+lineNo+" 行: 语句不合法");
+            LexerError lineErr=new LexerError("Line "+lineNo+" :  Statement invalid");
+            valid=false;
         }
 
 
@@ -140,7 +149,7 @@ public class LexerAnalysis {
     }
 
     private int getPosition(String key,String s){
-        return s.indexOf(key);
+        return s.indexOf(key)+1;
     }
     private boolean isIdentifierFormat(String key) {
         if (key.matches("^[a-zA-Z](([0-9a-zA-Z_]*[0-9a-zA-Z])|[0-9a-zA-Z])?$")) {
@@ -151,6 +160,7 @@ public class LexerAnalysis {
 
     private void addValueToken(String content, int level, int pos, boolean isArrayContent){
         Token temp;
+        content=content.replace("\n","");
         if (content.matches("^(0|-?[1-9]\\d*)$")) {//int
             temp = new Token(TokenType.INT,content, level, lineNo , pos ,isArrayContent);
             TokenList.add(temp);
@@ -165,7 +175,8 @@ public class LexerAnalysis {
             TokenList.add(temp);
         } else {
             if (!content.startsWith("\"") || !content.endsWith("\"")) {//string
-                LexerError stringErr= new LexerError("expect <\">"+lineNo+"  "+pos);
+                LexerError stringErr= new LexerError("Line "+lineNo+", Position"+pos+": expect <\">");
+                valid=false;
             }
             temp = new Token(TokenType.STRING,content, level, lineNo , pos ,isArrayContent);
             TokenList.add(temp);

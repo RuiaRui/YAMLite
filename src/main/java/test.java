@@ -7,7 +7,7 @@ public class test {
     public static void main(String[] args) throws IOException {
         LexerAnalysis lex=new LexerAnalysis();
         ArrayList<Token> TokenList;
-        TokenList=lex.lexer("sample.yml");
+        TokenList=lex.lexer("sample2.yml");
         System.out.println(TokenList);
 
 
