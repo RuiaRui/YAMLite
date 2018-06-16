@@ -6,7 +6,7 @@ public enum TokenType {
     STRING,
     INT,
     FLOAT,
-    DECIMAL,
+    DECIMAL,//科学记数
     BOOL,
     ARRAY,
     COOMENT
