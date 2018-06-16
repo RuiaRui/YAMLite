@@ -5,12 +5,16 @@ public class Token {
     private String value;
     private int LineNo = 1;
     private int pos;
+    private int level;
+    private boolean isArray;
 
-    public  Token(TokenType type, String value, int lineNo, int pos){
+    public  Token(TokenType type, String value,int level, int lineNo, int pos,boolean isArray){
         this.type=type;
         this.value=value;
         this.LineNo=lineNo;
         this.pos=pos;
+        this.level=level;
+        this.isArray=isArray;
     }
 
     public int getLineNo() {
@@ -43,6 +47,14 @@ public class Token {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     @Override
