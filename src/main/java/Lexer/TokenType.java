@@ -9,6 +9,13 @@ public enum TokenType {
     DECIMAL,
     BOOL,
     ARRAY,
-    COOMENT
+    COMMENT,
+    QUOTE,
+    COMMA,
+    COLON,
+    EOF,
+
+    ERRORSTR,
+    ERRORNUM
 
 }
