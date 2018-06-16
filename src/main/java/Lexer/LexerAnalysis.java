@@ -10,10 +10,12 @@ import java.util.ArrayList;
 //
 public class LexerAnalysis {
     private boolean valid = true;
-    private ArrayList<Token> TokenList;
+    private ArrayList<Token> TokenList = new ArrayList<Token>();
     private String s = "";
     private int indent = 2; // 缩进为2个空格
     private int lineNo=0;
+
+
 
 
     public ArrayList<Token> lexer(String path){
@@ -49,7 +51,7 @@ public class LexerAnalysis {
         }
         if(line!=null){
             lineNo++;
-           // line+="\n";
+           line+="\n";
         }
         return line;
     }
@@ -58,7 +60,7 @@ public class LexerAnalysis {
     private void checkLine(String line){
         int currentIndent=0;
         String currentLine=line;
-        int level=0;
+        int level;
 
         while (currentLine.startsWith(" ")) {
             currentIndent++;
@@ -81,8 +83,9 @@ public class LexerAnalysis {
             Token comment = new Token(TokenType.COMMENT, content, level,  lineNo,posTemp+1,false);
             TokenList.add(comment);
         }
+
         //key:value
-        else if(currentLine.contains(":")){
+        if(currentLine.contains(":")){
             String[] temp = currentLine.split(":", 2);
             String key = temp[0];
             String value = temp[1];
@@ -98,9 +101,10 @@ public class LexerAnalysis {
                 }
             }else{
                 value=value.replace(" ","");
-                if(value=="\n"){
+                if(value.equals("\n")){
                     TokenList.add(new Token(TokenType.KEYWORD,key,level,lineNo,keypos,true));
                 }else{
+                    TokenList.add(new Token(TokenType.KEYWORD,key,level,lineNo,keypos,level>0));
                     int valuepos=getPosition(value,line);
                     addValueToken(value,level,valuepos,level>0);
                 }
@@ -111,21 +115,21 @@ public class LexerAnalysis {
             int pos=getPosition("-",line);
             currentLine=currentLine.substring(1);
             if(!currentLine.startsWith(" ")) {
-                if (currentLine == "\n") {
+                if (currentLine.equals("\n")) {
                     TokenList.add(new Token(TokenType.ARRAY, "-", level, lineNo, pos, true));
                 } else {
                     LexerError spaceerror2 = new LexerError(+lineNo + " 行: " + pos + 2 + "- 后缺少空格");
                 }
             }else {
                 currentLine = currentLine.trim();
-                if (currentLine == "\n") {
+                if (currentLine.equals("\n")) {
                     TokenList.add(new Token(TokenType.ARRAY, "-", level, lineNo, pos, true));
                 } else {
                     int pos2=getPosition(currentLine,line);
                     addValueToken(currentLine,level,pos2,level>0);
                 }
             }
-        }else if(currentLine=="\n"){
+        }else if(currentLine.equals("\n")| currentLine.equals("")){
             return;
         }else {
             LexerError lineErr=new LexerError(+lineNo+" 行: 语句不合法");
@@ -161,7 +165,7 @@ public class LexerAnalysis {
             TokenList.add(temp);
         } else {
             if (!content.startsWith("\"") || !content.endsWith("\"")) {//string
-                LexerError stringErr= new LexerError("expect <\">"+lineNo+pos);
+                LexerError stringErr= new LexerError("expect <\">"+lineNo+"  "+pos);
             }
             temp = new Token(TokenType.STRING,content, level, lineNo , pos ,isArrayContent);
             TokenList.add(temp);
