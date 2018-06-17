@@ -11,6 +11,7 @@ public class Node {
     private String value;
     private TokenType type;
     private NodeType nodeType;
+    private int level;
     public TokenType getType() {
         return type;
     }
@@ -43,10 +44,19 @@ public class Node {
         this.child.add(child);
     }
 
-    public Node(TokenType type, String value, NodeType nodeType) {
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public Node(TokenType type, String value, int Level, NodeType nodeType) {
         this.type = type;
         this.value = value;
         this.nodeType=nodeType;
+        this.level=Level;
         child = new ArrayList<Node>();
     }
 

@@ -143,14 +143,13 @@ public class LexerAnalysis {
             LexerError lineErr=new LexerError("Line "+lineNo+" :  Statement invalid");
             valid=false;
         }
-
-
-
     }
 
     private int getPosition(String key,String s){
         return s.indexOf(key)+1;
     }
+
+
     private boolean isIdentifierFormat(String key) {
         if (key.matches("^[a-zA-Z](([0-9a-zA-Z_]*[0-9a-zA-Z])|[0-9a-zA-Z])?$")) {
             return true;

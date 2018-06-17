@@ -50,6 +50,7 @@ public class YAMLite {
                 switch (op){
                     case parse:
                         parse.parser();
+                        System.out.println("vaild");
                         break;
                     case find:
                         parse.find(index);
