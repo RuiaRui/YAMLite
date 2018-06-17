@@ -1,123 +1,173 @@
 package Parse;
 
-import java.io.File;
-import java.io.IOException;
 import Lexer.*;
+
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class Parse {
 
-    private boolean valid;
-    private int index;
-    private ArrayList<Token> tokens;
+    private boolean valid=true;
+//    private int index=0;
     private Token current;
-   // private TreeNode root;
+    private LexerAnalysis lex;
+    private Queue<Token> tokens;
+    private ArrayList<Node> nodes;
 
-
-    private final HashSet<TokenType> follow=new HashSet<TokenType>(){
-        {
-            add(TokenType.STRING);
-            add(TokenType.INT);
-            add(TokenType.FLOAT);
-            add(TokenType.DECIMAL);//scientific counting
-            add(TokenType.BOOL);
-            add(TokenType.ERRORNUM);
-            add(TokenType.ERRORSTR);
+    public Parse(String filepath){
+        lex=new LexerAnalysis();
+        ArrayList<Token> t=lex.lexer(filepath);
+        tokens=new LinkedList<Token>();
+        for(Token token:t){
+            tokens.offer(token);
         }
-    };
+        nodes=new ArrayList<Node>();
 
-    private void getnext()  {
-        if (index+1 < tokens.size())
-            current = tokens.get(++index);
-        else {
-            Token end = new Token(TokenType.EOF, current.getValue(), current.getLineNo(), current.getPos());
-            current = end;
-            index = tokens.size();
-        }
     }
 
-    private boolean match(TokenType in)  {
-        String str = current.toString() + ": expected <" ;
-        if (current.getType() == in) {
-            getnext();
-            return true;
-        }
-        else {
-            if (Objects.equals(String.valueOf(in), "QUOTE")){
-                str += " \" >";
-            }
-            else if (Objects.equals(String.valueOf(in), "COMMA")){
-                str += " , >";
-            }
-            else if (Objects.equals(String.valueOf(in), "COLON")){
-                str += " : >";
-            }
-            else
-                str += String.valueOf(in)+">";
-            System.out.println(str);
-            return false;
-        }
-    }
-
-
-
-
-
-    protected:
-    int T;
-    Node analy_str[100]; //输入文法解析
-
-    set<char> first_set[100];//first集
-    set<char> follow_set[100];//follow集
-    vector<char> ter_copy; //去$终结符
-    vector<char> ter_colt;//终结符
-    vector<char> non_colt;//非终结符
-
-    private void get_first(char target){
-        int tag = 0;
-        int flag = 0;
-        for (int i = 0; i<T; i++)
-        {
-            if (analy_str[i].left == target)//匹配产生式左部
-            {
-                if (!isNotSymbol(analy_str[i].right[0]))//对于终结符，直接加入first
-                {
-                    first_set[get_index(target)].insert(analy_str[i].right[0]);
+    public void parser(){
+        while (tokens.peek()!=null){
+            current=tokens.poll();
+            //key：value
+            if (!current.isArray()){
+                if(current.getType()== TokenType.KEYWORD){
+                    parseKeyAndValue(current,nodes);
+                }else {
+                    ParseError keyErr=new ParseError("Line "+current.getLineNo()+":  missing key");
+                    valid=false;
                 }
-                else
-                {
-                    for (int j = 0; j<analy_str[i].right.length(); j++)
-                    {
-                        if (!isNotSymbol(analy_str[i].right[j]))//终结符结束
-                        {
-                            first_set[get_index(target)].insert(analy_str[i].right[j]);
-                            break;
-                        }
-                        get_first(analy_str[i].right[j]);//递归
-                        //  cout<<"curr :"<<analy_str[i].right[j];
-                        set<char>::iterator it;
-                        for (it = first_set[get_index(analy_str[i].right[j])].begin(); it != first_set[get_index(analy_str[i].right[j])].end(); it++)
-                        {
-                            if (*it == '$')
-                            flag = 1;
-                        else
-                            first_set[get_index(target)].insert(*it);//将FIRST(Y)中的非$就加入FIRST(X)
-                        }
-                        if (flag == 0)
-                            break;
-                        else
-                        {
-                            tag += flag;
-                            flag = 0;
-                        }
-                    }
-                    if (tag == analy_str[i].right.length())//所有右部first(Y)都有$,将$加入FIRST(X)中
-                        first_set[get_index(target)].insert('$');
+            }
+            //array
+            else{
+                if(current.getType()== TokenType.KEYWORD){
+                    int currentLevel=current.getLevel();
+                   parseArray(current,nodes,currentLevel);
+                }else {
+                    ParseError keyErr=new ParseError("Line "+current.getLineNo()+":  missing key");
+                    valid=false;
                 }
             }
         }
+        if (valid) {
+            System.out.println("Valid");
+        } else {
+            System.exit(1);
+        }
     }
 
+    public void find(String index) {
+        parser();
+        ArrayList<Node> results = nodes;
+        String[] indexes = index.split(".");
+        for (String i : indexes) {
+            if (i.matches("^(.*)(\\[[0-9]*\\])$")) {
+                String[] arrayIndex = i.split("\\[|\\]");
+                String arrayName = arrayIndex[0];
+                int arrayPos = Integer.parseInt(arrayIndex[1]);
+                results=findNode(arrayName,arrayPos,NodeType.ARRAY,results,results);
+            }else{
+                results=findNode(i,0,NodeType.ARRAY,results,results);
+            }
+        }
+        for(Node r:results){
+            System.out.println(r.getValue());
+        }
+    }
+
+    public void json(){
+        parser();
+        StringBuilder json=new StringBuilder();
+        json.append("{\n");
+
+        for(Node n:nodes){
+            if(n.getNodeType()==NodeType.ARRAY){
+
+            }else {
+                jsonKey(n);
+            }
+        }
 
 
+    }
+
+    private String jsonKey(Node n){
+        StringBuilder s = new StringBuilder();
+        s.append("\"" + n.getValue() + "\" : ");
+        Node c = n.getChild().get(0);
+        s.append(c.getValue());
+        s.append(", \n");
+
+        return s.toString();
+    }
+
+    private String jsonArray(Node n){
+        StringBuilder s =new StringBuilder();
+        if (n.getValue().equals("-")) {
+            s.append("[");
+        } else {
+            s.append("\"" + n.getValue() + "\":[");
+        }
+        ArrayList<Node> children=n.getChild();
+        for(Node nn:children){
+            if(nn.getValue().equals("-")){
+                s.append(jsonArray(nn));
+                s.append(", \n");
+            }
+            else {
+                s.append("{ \n");
+                s.append(jsonKey(nn));
+                s.append("} \n");
+            }
+        }
+
+        return s.toString();
+
+    }
+
+    private ArrayList<Node> findNode(String name,int Pos,NodeType type,ArrayList<Node> source,ArrayList<Node> result){
+        for(Node n :source){
+            if(n.getNodeType()==type&&n.getValue()==name){
+                result.add(n.getChild().get(Pos));
+            }
+
+        }
+        return result;
+    }
+
+    private void parseArray(Token token, ArrayList<Node> parent, int Level){
+        Node node=new Node(token.getType(),token.getValue(),NodeType.ARRAY);
+        while (!tokens.isEmpty()&&tokens.peek().getLevel() == Level + 1){
+            Token tempT = tokens.poll();
+            Node tempN = new Node(tempT.getType(),tempT.getValue(),NodeType.ARRAY);
+            if (tempT.getType().equals(TokenType.ARRAY)) {
+                parseArray(tempT, node.getChild(), Level + 1);
+            }else if(tempT.getType().equals(TokenType.KEYWORD)){
+                parseKeyAndValue(tempT,node.getChild());
+            }else{
+                node.addChild(tempN);
+            }
+        }
+        parent.add(node);
+
+    }
+
+    private void parseKeyAndValue(Token t,ArrayList<Node> n){
+        Node keyNode=new Node(t.getType(),t.getValue(),NodeType.KEYWORD);
+
+        if(tokens.peek()!=null){
+            t=tokens.poll();
+            Node valueNode=new Node(t.getType(),t.getValue(),NodeType.VALUE);
+            keyNode.addChild(valueNode);
+        }else{
+            ParseError valueErr=new ParseError("Line "+t.getLineNo()+":  missing value");
+            valid=false;
+        }
+        n.add(keyNode);
+
+
+    }
+
+    public ArrayList<Node> getNodes() {
+        return nodes;
+    }
 }

@@ -10,12 +10,13 @@ public enum TokenType {
     BOOL,
     ARRAY,
     COMMENT,
+
+
     QUOTE,
     COMMA,
     COLON,
     EOF,
 
-    ERRORSTR,
-    ERRORNUM
+
 
 }

@@ -3,7 +3,7 @@ package Lexer;
 public class Token {
     private TokenType type;
     private String value;
-    private int LineNo = 1;
+    private int LineNo;
     private int pos;
     private int level;
     private boolean isArray;
@@ -57,8 +57,12 @@ public class Token {
         this.level = level;
     }
 
-    @Override
-    public String toString() {
-        return "line:" +getLineNo()+", position :"+getPos();
+    public boolean isArray() {
+        return isArray;
     }
+
+    public void setArray(boolean array) {
+        isArray = array;
+    }
+
 }

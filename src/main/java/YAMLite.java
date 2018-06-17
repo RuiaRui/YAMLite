@@ -1,3 +1,5 @@
+import Parse.Parse;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -5,28 +7,35 @@ public class YAMLite {
 
 
 
-    enum options{prase,json,find}
+    enum options{parse,json,find}
 
 
-    public YAMLite(String file){
+    public YAMLite(){
+
+
 
     }
     public static void main(String[] args) throws IOException{
-        options op =options.prase;
+        options op =options.parse;
         String filepath=System.getProperty("user.dir");
+        String index="";
 
         if(args.length==1){
             filepath=args[0];
-        }else if(args.length==2){
+        }else if(args.length==2&&(args[0].equals("-json")|args[0].equals("-parse"))){
             if(args[0].equals("-json")){
                 op=options.json;
-            } else if(args[0].equals("-find")) {
-                op = options.find;
+
             } else {
-                op=options.prase;
+                op=options.parse;
             }
             filepath=args[1];
-        }else {
+        }else if(args.length==3&&args[0].equals("-find")) {
+            op = options.find;
+            filepath=args[2];
+            index=args[1];
+        }
+        else {
             System.out.println("Usage: yamlite [option [value]] file");
             System.exit(0);
         }
@@ -36,8 +45,19 @@ public class YAMLite {
             if(!file.isFile() || !file.exists()) {
                 System.out.println("No such file exists, please check and try again");
             }else {
-                //具体实现
-
+                YAMLite y=new YAMLite();
+                Parse parse=new Parse(filepath);
+                switch (op){
+                    case parse:
+                        parse.parser();
+                        break;
+                    case find:
+                        parse.find(index);
+                        break;
+                    case json:
+                        parse.json();
+                        break;
+                }
             }
         }catch (Exception e){
             e.printStackTrace();
